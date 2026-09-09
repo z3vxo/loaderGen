@@ -1,4 +1,8 @@
 #include "includes/main/core.h"
+#include "includes/apis/apidefs.h"
+#include "includes/apis/apis.h"
+
+#include "stdio.h"
 
 
 
@@ -20,14 +24,23 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fwReason, LPVOID lpvReserved) {
 #endif
 
 
-#ifdef OUTPUT_EXE
-int main() {
 
+
+int main() {
+	
+
+	
+	printf("#define HASHED_NTDLL 0x%08x\n", HasherW(L"ntdll.dll"));
+	
 	if (!LoadMain()) return 1;
+
+
+
+
 
 
 	return 0;
 }
 
-#endif // DEBUG
+
 
