@@ -1,0 +1,30 @@
+#pragma once
+#include <Windows.h>
+
+
+#define NONCE_SIZE <|REPLACE_NONCE_SIZE_HERE|>
+
+typedef struct Config {
+	DWORD DebugChecks;
+	BOOL LocalOrRemotePayload;
+#ifdef REMOTE_PAYLOAD
+	struct { WCHAR url[<REPLACE_URL_HERE>]; WCHAR uri[<REPLACE_URI_HERE>]; WCHAR UserAgent[<REPLACE_UA_HERE>]; DWORD port; DWORD isSecure; } http;
+#endif
+#ifdef REMOTE
+	struct { DWORD pid; CHAR dllName[<REPLACE_DLL_NAME_HERE>]; CHAR ProcessName[<REPLACE_PROCESS_NAME_HERE>]; } remoteSettings;
+	/*
+	above is for per choice settings, e.g 
+	user may want to target PID 123 for remote injection, 
+	may want to target d3dui.dll for module stomping etc
+	
+	*/
+#endif
+
+	BYTE EncryptionKey[32]; 
+	BYTE Nonce[NONCE_SIZE];
+	DWORD DelayBetween; // delay between api calls, mem ops and execution ops
+	DWORD DelayBefore; // delay before final payload execution
+
+} Config;
+
+DWORD ParseConfig();

