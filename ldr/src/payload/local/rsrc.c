@@ -9,7 +9,7 @@
 	manually parses and extracts it
 */
 
-#ifdef PAYLOAD_LOCAL_RSRC
+
 
 LPVOID payload_get(PDWORD PayloadSize) {
 	HMODULE ourBase = g_ldr->hModule;
@@ -65,4 +65,3 @@ LPVOID payload_get(PDWORD PayloadSize) {
 
 
 }
-#endif

@@ -3,24 +3,23 @@
 
 
 
-// local payload file for basic embed, .text, .rdata/data
+
 
 #if defined(PAYLOAD_SECTION_TEXT)
 #pragma section(".text")
 __declspec(allocate(".text")) CONST UCHAR Payload[] = { ... };
 #elif defined(PAYLOAD_SECTION_RDATA)
-CONST UCHAR Payload[] = { ... };  // CONST already puts it in .rdata
+CONST UCHAR Payload[] = { ... };  
 #elif defined(PAYLOAD_SECTION_DATA)
-UCHAR Payload[] = { ... };        // mutable -> .data
+UCHAR Payload[] = { ... };        
 #endif
 
 
 
-#ifdef PAYLOAD_LOCAL_EMBED
+
 LPVOID payload_get(PDWORD PayloadSize) {
 	DWORD Size = sizeof(Payload);
     *PayloadSize = Size;
     return Payload;
 
 }
-#endif

