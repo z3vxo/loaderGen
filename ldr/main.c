@@ -9,17 +9,18 @@
 
 #ifdef OUTPUT_DLL
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fwReason, LPVOID lpvReserved) {
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved) {
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH: 
 		CreateThread(NULL, 0, LoadMain, hinstDLL, 0, NULL);
+		break;
 	case DLL_PROCESS_DETACH:
 		break;
 						   
 
 	}
-	
+	return TRUE;
 }
 
 #endif

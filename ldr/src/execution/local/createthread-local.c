@@ -20,7 +20,7 @@ BOOL execution_load_apis() {
 
 BOOL execution_run(MemoryInfo memInfo) {
 	HANDLE hThread = g_ldr->apis->CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)memInfo.ShellCodeAddress, NULL, 0, NULL);
-	if (hThread == INVALID_HANDLE_VALUE) return FALSE;
+	if (hThread == NULL) return FALSE;
 	WaitForSingleObject(hThread, INFINITE);
 	return TRUE;
 }

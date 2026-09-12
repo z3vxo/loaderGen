@@ -40,10 +40,10 @@ typedef struct Config {
 
 DWORD ParseConfig();
 
-PBYTE GetConfigBytes() {
+static inline PBYTE GetConfigBytes() {
 	return (PBYTE)<REPLACE_CONFIG_BYTES>;
 }
 
-DWORD GetConfigSize() {
+static inline DWORD GetConfigSize() {
 	return <REPLACE_CONFIG_SIZE>;
 }

