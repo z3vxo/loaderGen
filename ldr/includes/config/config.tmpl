@@ -3,6 +3,8 @@
 
 
 #define NONCE_SIZE <|REPLACE_NONCE_SIZE_HERE|>
+#define KEY_LENGTH 32
+
 
 typedef struct Config {
 	DWORD DebugChecks;
@@ -29,7 +31,7 @@ typedef struct Config {
 	*/
 #endif
 
-	BYTE EncryptionKey[32]; 
+	BYTE EncryptionKey[KEY_LENGTH]; 
 	BYTE Nonce[NONCE_SIZE];
 	DWORD DelayBetween; // delay between api calls, mem ops and execution ops
 	DWORD DelayBefore; // delay before final payload execution
