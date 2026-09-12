@@ -38,7 +38,7 @@ typedef struct Config {
 
 } Config;
 
-DWORD ParseConfig();
+BOOL ParseConfig();
 
 static inline PBYTE GetConfigBytes() {
 	return (PBYTE)<REPLACE_CONFIG_BYTES>;
