@@ -27,6 +27,9 @@ LPVOID payload_get(PDWORD PayloadSize) {
     BOOL bResults;
     LPVOID outBuffer = NULL;
 
+    DBGW(L"URL: %s", g_ldr->config->http.url);
+    DBGW(L"%s\n", g_ldr->config->http.uri);
+
     hSession = g_ldr->apis->WinHttpOpen(L"TEST", WINHTTP_ACCESS_TYPE_NO_PROXY,
         WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0);

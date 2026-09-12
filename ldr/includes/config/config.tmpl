@@ -20,8 +20,8 @@ typedef struct Config {
 #ifdef REMOTE
 	struct { 
 		DWORD pid; 
-		CHAR dllName[<|REPLACE_DLL_NAME_HERE|>]; 
-		CHAR ProcessName[<|REPLACE_PROCESS_NAME_HERE|>]; 
+		WCHAR dllName[<|REPLACE_DLL_NAME_HERE|>]; 
+		WCHAR ProcessName[<|REPLACE_PROCESS_NAME_HERE|>]; 
 	} remoteSettings;
 	/*
 	above is for per choice settings, e.g 
