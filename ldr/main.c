@@ -1,41 +1,39 @@
 #include "includes/core/core.h"
-#include "includes/apis/apidefs.h"
-#include "includes/apis/apis.h"
 
-#include "stdio.h"
-#include "winhttp.h"
 
 
 
 #ifdef OUTPUT_DLL
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpvReserved) {
-	switch (dwReason)
-	{
-	case DLL_PROCESS_ATTACH: 
-		CreateThread(NULL, 0, LoadMain, hinstDLL, 0, NULL);
-		break;
-	case DLL_PROCESS_DETACH:
-		break;
-						   
-
-	}
-	return TRUE;
+    switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+#ifndef OUTPUT_RUNDLL
+        CreateThread(NULL, 0, LoadMain, hinstDLL, 0, NULL);
+#endif
+        break;
+    }
+    return TRUE;
 }
 
 #endif
 
+#ifdef OUTPUT_RUNDLL
+__declspec(dllexport) void CALLBACK rundll(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow) {
+    LoadMain((LPVOID)hinst);
+}
+#endif
 
 
+
+#ifdef OUTPUT_EXE
 
 int main() {
-	
-	/*printf("WinHttpReadData hash: 0x%08x\n", HasherA("WinHttpReadData"));
-	return 1;*/
+
 	if (!LoadMain(NULL)) return 1;
 
 	return 0;
 }
 
-
+#endif
 
