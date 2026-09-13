@@ -1,14 +1,23 @@
 #pragma once
 #include "../../includes/core/core.h"
 #include "../../includes/apis/apis.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 
 
 
 
 
+#ifdef REMOTE
 
+static inline void resolve_snapshot_apis(void) {
+	if (!g_ldr->apis->pCreateToolhelp32Snapshot)
+		g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
+	if (!g_ldr->apis->Process32NextW)
+		g_ldr->apis->Process32NextW = (pProcess32Next)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32NEXTW);
+	if (!g_ldr->apis->Process32FirstW)
+		g_ldr->apis->Process32FirstW = (pProcess32First)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32FIRSTW);
+}
 
 static inline HANDLE open_process_by_pid(DWORD pid) {
 	HANDLE h = g_ldr->apis->OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
@@ -17,15 +26,7 @@ static inline HANDLE open_process_by_pid(DWORD pid) {
 }
 
 static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
-	if (!g_ldr->apis->pCreateToolhelp32Snapshot) {
-		g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
-	}
-	if (!g_ldr->apis->Process32NextW) {
-		g_ldr->apis->Process32NextW = (pProcess32Next)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32NEXTW);
-	}
-	if (!g_ldr->apis->Process32FirstW) {
-		g_ldr->apis->Process32FirstW = (pProcess32First)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32FIRSTW);
-	}
+	resolve_snapshot_apis();
 
 	HANDLE s = g_ldr->apis->pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	PROCESSENTRY32W pe;
@@ -47,23 +48,14 @@ static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
 	}
 	g_ldr->apis->CloseHandle(s);
 	return hProc;
-	Process32NextW
 }
 
 static inline HANDLE open_first_process(PDWORD chosenPid) {
-	if (!g_ldr->apis->pCreateToolhelp32Snapshot) {
-		g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
-	}
-	if (!g_ldr->apis->Process32NextW) {
-		g_ldr->apis->Process32NextW = (pProcess32Next)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32NEXTW);
-	}
-	if (!g_ldr->apis->Process32FirstW) {
-		g_ldr->apis->Process32FirstW = (pProcess32First)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32FIRSTW);
-	}
+	resolve_snapshot_apis();
 
 	HANDLE s = g_ldr->apis->pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	PROCESSENTRY32 pe;
-	pe.dwSize = sizeof(PROCESSENTRY32);
+	PROCESSENTRY32W pe;
+	pe.dwSize = sizeof(PROCESSENTRY32W);
 
 	HANDLE hProc = NULL;
 
@@ -99,4 +91,4 @@ static inline HANDLE resolve_target_process(PDWORD chosenPid) {
 	return open_first_process(chosenPid);
 }
 
-
+#endif

