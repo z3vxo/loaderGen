@@ -14,11 +14,7 @@ BOOL memory_load_apis() {
 	g_ldr->apis->OpenProcess = (pOpenProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_OPENPROCESS);
 	g_ldr->apis->VirtualAllocEx = (pVirtualAllocEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_VIRTUALALLOCEX);
 	g_ldr->apis->WriteProcessMemory = (pWriteProcessMemory)GetProc(g_ldr->apis->modules.kernel32, HASHED_WRITEPROCESSMEMORY);
-	g_ldr->apis->VirtualProtect = (pVirtualProtect)GetProc(g_ldr->apis->modules.kernel32, HASHED_VIRTUALPROTECT);
-
-	if (g_ldr->apis->WriteProcessMemory == NULL || g_ldr->apis->VirtualAlloc == NULL) {
-		return FALSE;
-	}
+	g_ldr->apis->VirtualProtectEx = (pVirtualProtectEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_VIRTUALPROTECTEX);
 
 	return TRUE;
 }

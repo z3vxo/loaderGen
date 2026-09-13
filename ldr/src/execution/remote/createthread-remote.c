@@ -5,9 +5,6 @@
 
 BOOL execution_load_apis() {
 	g_ldr->apis->CreateRemoteThreadEx = (pCreateRemoteThreadEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEREMOTETHREADEX);
-	if (g_ldr->apis->CreateThread == NULL) {
-		return FALSE;
-	}
 	return TRUE;
 }
 
