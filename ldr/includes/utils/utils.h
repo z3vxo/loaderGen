@@ -16,7 +16,7 @@ static inline HANDLE open_process_by_pid(DWORD pid) {
 	
 }
 
-static inline HANDLE open_process_by_name(PWCHAR name) {
+static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
 	if (!g_ldr->apis->pCreateToolhelp32Snapshot) {
 		g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
 	}
@@ -38,6 +38,7 @@ static inline HANDLE open_process_by_name(PWCHAR name) {
 			if (wcscmp(pe.szExeFile, name) == 0) {
 				hProc = open_process_by_pid(pe.th32ProcessID);
 				if (hProc) {
+					*chosenPid = pe.th32ProcessID;
 					g_ldr->apis->CloseHandle(s);
 					return hProc;
 				}
@@ -49,7 +50,7 @@ static inline HANDLE open_process_by_name(PWCHAR name) {
 	Process32NextW
 }
 
-static inline HANDLE open_first_process() {
+static inline HANDLE open_first_process(PDWORD chosenPid) {
 	if (!g_ldr->apis->pCreateToolhelp32Snapshot) {
 		g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
 	}
@@ -70,6 +71,7 @@ static inline HANDLE open_first_process() {
 		do {
 			hProc = g_ldr->apis->OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe.th32ProcessID);
 			if (hProc) {
+				*chosenPid = pe.th32ProcessID;
 				g_ldr->apis->CloseHandle(s);
 				break;
 			}
@@ -79,18 +81,22 @@ static inline HANDLE open_first_process() {
 	return hProc;
 }
 
-static inline HANDLE resolve_target_process() {
+static inline HANDLE resolve_target_process(PDWORD chosenPid) {
 	if (g_ldr->config->remoteSettings.pid != 0) {
 		HANDLE h = open_process_by_pid(g_ldr->config->remoteSettings.pid);
-		if (h) return h;
+		if (h) {
+			*chosenPid = g_ldr->config->remoteSettings.pid;
+			return h;
+		}
 	}
 
 	if (g_ldr->config->remoteSettings.ProcessName[0] != '\0') {
-		HANDLE h = open_process_by_name(g_ldr->config->remoteSettings.ProcessName);
-		if (h) return h;
+		HANDLE h = open_process_by_name(g_ldr->config->remoteSettings.ProcessName, chosenPid);
+		if (h) 
+			return h;
 	}
 
-	return open_first_process();
+	return open_first_process(chosenPid);
 }
 
 
