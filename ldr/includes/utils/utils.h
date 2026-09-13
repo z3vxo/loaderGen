@@ -1,5 +1,6 @@
 #pragma once
 #include "../../includes/core/core.h"
+#include "../../includes/core/nt.h"
 #include "../../includes/apis/apis.h"
 #include <tlhelp32.h>
 
@@ -71,3 +72,11 @@ static inline HANDLE resolve_target_process(PDWORD chosenPid) {
 }
 
 #endif
+
+PPEB GetPeb() {
+#if defined(_WIN64) || defined(__x86_64__)
+    return (PPEB)__readgsqword(0x60);
+#elif defined(_M_IX86)|| defined(__i386__)
+    return (PPEB)__readfsdword(0x30);
+#endif
+}
