@@ -36,7 +36,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 		memInfo.BytesWrote = 0;
 		return memInfo;
 	}
-	DWORD BytesWrote = 0;
+	SIZE_T BytesWrote = 0;
 	if (!g_ldr->apis->WriteProcessMemory(hProc, addr, PayloadAddress, PayloadSize, &BytesWrote)) {
 		DBGA("[!] Failed Writing Remote Memory | %lu\n", GetLastError());
 		memInfo.ok = FALSE;
