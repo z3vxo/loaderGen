@@ -5,6 +5,8 @@
 
 BOOL execution_load_apis() {
 	g_ldr->apis->CreateRemoteThreadEx = (pCreateRemoteThreadEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEREMOTETHREADEX);
+	DBGA("mine: 0x%08x\n", g_ldr->apis->CreateRemoteThreadEx);
+	DBGA("mine: 0x%08x\n", GetProcAddress(g_ldr->apis->modules.kernel32, "CreateRemoteThreadEx"));
 	return TRUE;
 }
 
