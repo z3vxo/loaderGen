@@ -7,7 +7,7 @@
 
 #if defined(PAYLOAD_SECTION_TEXT)
 #pragma section(".text")
-__declspec(allocate(".text")) CONST UCHAR Payload[] = { ... };
+__attribute__((section(".text"))) CONST UCHAR Payload[] = {...};
 #elif defined(PAYLOAD_SECTION_RDATA)
 CONST UCHAR Payload[] = { ... };  
 #elif defined(PAYLOAD_SECTION_DATA)

