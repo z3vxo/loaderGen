@@ -12,7 +12,7 @@
 
 BOOL memory_load_apis() {
 
-	g_ldr->apis->NtOpenProcess = (pOpenProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTOPENPROCESS);
+	g_ldr->apis->NtOpenProcess = (pNtOpenProcess)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTOPENPROCESS);
 	g_ldr->apis->NtCreateSection = (pNtCreateSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCREATESECTION);
 	g_ldr->apis->NtMapViewOfSection = (pNtMapViewOfSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTMAPVIEWOFSECTION);
 	g_ldr->apis->NtUnmapViewOfSection = (pNtUnmapViewOfSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTUNMAPVIEWOFSECTION);
