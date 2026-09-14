@@ -2,23 +2,23 @@
 #include "../../../includes/payload/payload.h"
 
 
-
-
-
 #if defined(PAYLOAD_SECTION_TEXT)
-__attribute__((section(".text"))) CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
+__attribute__((section(".text"))) UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
 #elif defined(PAYLOAD_SECTION_RDATA)
-CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };  
+CONST UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
 #elif defined(PAYLOAD_SECTION_DATA)
-UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };        
+UCHAR Payload[] = { PAYLOAD_REPLACE_SHELLCODE_MARKER };
 #endif
 
 
-
-
-LPVOID payload_get(PDWORD PayloadSize) {
-	DWORD Size = sizeof(Payload);
+PVOID payload_get(PDWORD PayloadSize) {
+    DWORD Size = sizeof(Payload);
     *PayloadSize = Size;
+#ifdef PAYLOAD_SECTION_DATA
     return Payload;
-
+#endif
+    LPVOID addr = g_ldr->apis->LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Size);
+    if (!addr) return NULL;
+    memcpy(addr, Payload, Size);
+    return addr;
 }
