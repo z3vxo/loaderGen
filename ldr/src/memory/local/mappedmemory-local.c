@@ -15,7 +15,7 @@ BOOL memory_load_apis() {
 		&& g_ldr->apis->NtUnmapViewOfSection && g_ldr->apis->NtCloseHandle;
 }
 
-MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
+MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize, HANDLE hProc, HANDLE hThread) {
 	MemoryInfo memInfo = { 0 };
     HANDLE hSection = NULL;
     LARGE_INTEGER sectionSize = { .QuadPart = PayloadSize };

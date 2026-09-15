@@ -18,17 +18,13 @@ typedef struct Config {
 	} http;
 #endif
 #ifdef REMOTE
-	struct { 
-		DWORD pid; 
-		WCHAR dllName[<|REPLACE_DLL_NAME_HERE|>]; 
-		WCHAR ProcessName[<|REPLACE_PROCESS_NAME_HERE|>]; 
+	struct {
+		DWORD pid;
+		WCHAR dllName[< | REPLACE_DLL_NAME_HERE | >];
+		CHAR ProcessName[< | REPLACE_PROCESS_NAME_HERE | >];
+		DWORD DoCreateProcess;
 	} remoteSettings;
-	/*
-	above is for per choice settings, e.g 
-	user may want to target PID 123 for remote injection, 
-	may want to target d3dui.dll for module stomping etc
-	
-	*/
+
 #endif
 
 	BYTE EncryptionKey[KEY_LENGTH]; 

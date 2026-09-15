@@ -72,7 +72,7 @@ BOOL execution_run(MemoryInfo memInfo) {
 	
     NTSTATUS stat;
 
-    HANDLE hThread = find_thread(memInfo.remotePid);
+    HANDLE hThread = memInfo.remoteThread;
     if (hThread == NULL) {
         DBGA("[!] Failed Finding Thread!\n");
         return FALSE;
