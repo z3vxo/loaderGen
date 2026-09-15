@@ -84,7 +84,9 @@ BOOL execution_run(MemoryInfo memInfo) {
     }
     ldr_sleep(g_ldr->config->DelayBetween);
 
-    CONTEXT threadContext;
+    CONTEXT threadContext = { 0 };
+    threadContext.ContextFlags = CONTEXT_FULL;
+
     stat = g_ldr->apis->NtGetContextThread(hThread, &threadContext);
     if (!NT_SUCCESS(stat)) {
         DBGA("[!] Failed Getting Thread Context\n");

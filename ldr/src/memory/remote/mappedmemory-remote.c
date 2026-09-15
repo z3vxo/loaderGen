@@ -84,6 +84,7 @@ MemoryInfo memory_run(LPVOID PayloadAddress, SIZE_T PayloadSize) {
     memInfo.ShellCodeAddress = remote;
     memInfo.BytesWrote = PayloadSize;
     memInfo.remoteProcess = hProc;
+    memInfo.remotePid = pid;
     memInfo.ok = TRUE;
 
     return memInfo;
