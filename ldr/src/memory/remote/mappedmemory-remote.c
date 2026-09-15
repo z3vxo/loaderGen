@@ -16,7 +16,7 @@ BOOL memory_load_apis() {
 	g_ldr->apis->NtCreateSection = (pNtCreateSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCREATESECTION);
 	g_ldr->apis->NtMapViewOfSection = (pNtMapViewOfSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTMAPVIEWOFSECTION);
 	g_ldr->apis->NtUnmapViewOfSection = (pNtUnmapViewOfSection)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTUNMAPVIEWOFSECTION);
-	g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCLOSE);
+    g_ldr->apis->NtCloseHandle = (pNtCloseHandle)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTCLOSE);;
 
 	return g_ldr->apis->NtOpenProcess && g_ldr->apis->NtCreateSection
 		&& g_ldr->apis->NtMapViewOfSection && g_ldr->apis->NtUnmapViewOfSection

