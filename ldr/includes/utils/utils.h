@@ -13,12 +13,8 @@
 #ifdef REMOTE
 
 static inline void resolve_snapshot_apis(void) {
-    if (!g_ldr->apis->pCreateToolhelp32Snapshot)
-        g_ldr->apis->pCreateToolhelp32Snapshot = (pCreateToolhelp32Snapshot)GetProc(g_ldr->apis->modules.kernel32, HASHED_CREATETOOLHELP32SNAPSHOT);
-    if (!g_ldr->apis->Process32NextW)
-        g_ldr->apis->Process32NextW = (pProcess32Next)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32NEXTW);
-    if (!g_ldr->apis->Process32FirstW)
-        g_ldr->apis->Process32FirstW = (pProcess32First)GetProc(g_ldr->apis->modules.kernel32, HASHED_PROCESS32FIRSTW);
+    if (!g_ldr->apis->NtQuerySystemInformation)
+        g_ldr->apis->NtQuerySystemInformation = (pNtQuerySystemInformation)GetProc(g_ldr->apis->modules.ntdll, HASHED_NTQUERYSYSTEMINFORMATION);
 }
 
 
@@ -30,29 +26,47 @@ static inline HANDLE open_process_by_pid(DWORD pid) {
     return h;
 }
 
-static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
-    resolve_snapshot_apis();
+#define SystemProcessInformation 5
 
-    HANDLE s = g_ldr->apis->pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (s == INVALID_HANDLE_VALUE) return NULL;
-    PROCESSENTRY32W pe;
-    pe.dwSize = sizeof(PROCESSENTRY32W);
+static inline HANDLE open_process_by_name(PWCHAR name, PDWORD chosenPid) {
+    ULONG bufferSize = 1024 * 1024;
+    PVOID buffer = g_ldr->apis->LocalAlloc(LPTR, bufferSize);
+    ULONG returnLength = 0;
+    NTSTATUS status;
+
+    while ((status = g_ldr->apis->NtQuerySystemInformation(
+        SystemProcessInformation,
+        buffer,
+        bufferSize,
+        &returnLength)) == STATUS_INFO_LENGTH_MISMATCH) {
+        g_ldr->apis->LocalFree(buffer);
+        bufferSize = returnLength + 4096;
+        buffer = g_ldr->apis->LocalAlloc(LPTR, bufferSize);
+    }
+
+    if (status != 0) {
+        g_ldr->apis->LocalFree(buffer);
+        return NULL;
+    }
 
     HANDLE hProc = NULL;
+    PSYSTEM_PROCESS_INFORMATION proc = (PSYSTEM_PROCESS_INFORMATION)buffer;
 
-    if (g_ldr->apis->Process32FirstW(s, &pe)) {
-        do {
-            if (_wcsicmp(pe.szExeFile, name) == 0) {
-                hProc = open_process_by_pid(pe.th32ProcessID);
-                if (hProc) {
-                    *chosenPid = pe.th32ProcessID;
-                    g_ldr->apis->NtCloseHandle(s);
-                    return hProc;
-                }
+    while (1) {
+        if (proc->ImageName.Buffer && _wcsicmp(proc->ImageName.Buffer, name) == 0) {
+            hProc = open_process_by_pid((DWORD)(ULONG_PTR)proc->UniqueProcessId);
+            if (hProc) {
+                *chosenPid = (DWORD)(ULONG_PTR)proc->UniqueProcessId;
+                break;
             }
-        } while (g_ldr->apis->Process32NextW(s, &pe));
+        }
+
+        if (proc->NextEntryOffset == 0)
+            break;
+        proc = (PSYSTEM_PROCESS_INFORMATION)((BYTE*)proc + proc->NextEntryOffset);
     }
-    g_ldr->apis->NtCloseHandle(s);
+
+    g_ldr->apis->LocalFree(buffer);
     return hProc;
 }
 
